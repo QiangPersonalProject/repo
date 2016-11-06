@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# bin location
+filedeleted="$HOME/deleted"
+
+####### start of the main function #########
+function remove(){
+    
+    #### check if argument provided 
+    if [ $# -eq 0 ] ; then
+        echo "Error: No file provided"
+        exit 1
+    fi  
+    #### for multiple files
+    for i in $*
+     do
+      file=$i
+      
+                ##### OPTION 1 #### have -iv or -vi  
+             
+                if [[ "$file" = "-iv"   ||  "$file" = "-vi" ]] ; then
+                    echo "Are you sure? y/n"
+                read var
+                shift
+                     if echo $var | grep -qiv "^n" ; then
+                     remove $*
+                     echo "File removed"
+                     exit 1
+                     fi
+                exit 1
+                fi
+                
+                ##### OPTION 2 ####  have -i         
+         
+                 if [ "$file" = "-i" ] ; then
+                    echo "Are you sure? y/n"
+                read var
+                shift
+                     if echo $var | grep -qiv "^n" ; then
+                     remove $*
+                     exit 1
+                     fi
+                exit 1
+                fi
+                
+                ##### OPTION 3 #### only have -v   
+        
+                if [ "$file" = "-v" ] ; then
+                shift
+                  remove $*
+                  echo "File removed"   
+                exit 1
+                fi
+               
+                #### check if the file exists
+                
+                if [ ! -e $file ] ; then
+                    echo "Error: File does not exsit"
+                    exit 1
+                fi    
+                
+                #### check if it is a directory
+                
+                if [ -d $file ] ; then
+                  echo "Error: It is a directory, please provide a file."
+                  exit 1
+                fi
+                
+                ##### check if the user want to delete the current script, and stop it #####
+                current=$(readlink -f $0)   
+                filelocation=$(readlink -f $file)
+                if [ "$filelocation" = "$current" ] ; then   
+                    echo "Error: Attempting to delete safe_rm - operation aborted" 
+                exit 1
+                fi  
+              
+                #### define the name for the deleted file in the bin 
+                 
+                inode=$(ls -i $file | cut -f1 -d" ")
+                oldname=$(basename $file)
+                newname="${oldname}_${inode}"
+                link=$(readlink -f $file)
+                
+                #### check if the  bin exsits   
+                    if [ -e $filedeleted ] 
+                    then
+                    	:
+                    else  
+                    	mkdir $HOME/deleted
+                    	chmod +x $HOME/deleted
+                    fi
+                    
+                 #### remove file   
+                    mv $file $filedeleted/$newname
+                    echo "${newname}:${link}" >> $HOME/.restore.info
+        done
+}
+####### end of the main function ######### 
+ 
+remove $*
+

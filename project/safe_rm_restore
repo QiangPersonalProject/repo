@@ -1,0 +1,55 @@
+#!/bin/bash
+
+###### define the function of restore
+
+function restore(){
+       oldname=$(cat ~/.restore.info | grep $(basename $1) | cut -d":" -f2)
+       olddir=$(dirname $oldname)
+       
+       #### creat the original directory
+       if [ ! -d $olddir ] ; then
+            mkdir -p $olddir
+       fi
+        mv ~/deleted/"$1" $oldname
+        
+        cat ~/.restore.info | grep -v $(basename $1) >  ~/temp_info
+        mv ~/temp_info   ~/.restore.info
+}    
+
+#### check if there is an argument
+if [ $# -eq 0 ] ; then
+    echo "Error: No file provided"
+    exit 1
+fi   
+    
+####  check if the file exsits
+if [ ! -e ~/deleted/"$1" ] ; then
+    echo "Error: File does not exsit"
+  exit 1
+fi    
+
+##### if the file in the destination already exsits, let the user choose what to do 
+if [ -e $(cat ~/.restore.info | grep $(basename $1) | cut -d":" -f2) ] ; then
+      echo "Do you want to overwrite? y/n"
+      read var
+      ##### do not want overwrite
+           if echo $var | grep -qiv "^y" ; then
+             echo "No restore executed"
+           exit 1
+           fi
+           
+      ##### do overwrite  
+           if echo $var | grep -qiv "^n" ; then
+             restore $1
+           exit 1
+           fi
+exit 1
+fi
+
+restore $1
+
+
+
+
+
+
